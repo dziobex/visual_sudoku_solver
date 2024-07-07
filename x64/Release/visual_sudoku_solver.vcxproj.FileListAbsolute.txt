@@ -1,1 +1,0 @@
-C:\Users\jedno\Desktop\projects\visual_sudoku_solver\x64\Release\visual_sudoku_solver.exe
