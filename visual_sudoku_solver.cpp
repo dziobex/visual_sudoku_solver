@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include <algorithm>
 #include <opencv2/opencv.hpp>
 #include <tesseract/baseapi.h>
 
@@ -16,6 +17,46 @@ void applyThreshold(cv::Mat& org, cv::Mat& mod) {
 }
 
 /*
+    get angle between 3 points (2 crossing vectors)
+*/
+double getAngle(cv::Point p1, cv::Point p2, cv::Point p3) {
+    double dx1 = (double)p1.x - (double)p2.x;
+    double dy1 = (double)p1.y - (double)p2.y;
+
+    double dx2 = (double)p3.x - (double)p2.x;
+    double dy2 = (double)p3.y - (double)p2.y;
+
+    return std::atan2(dx1 * dy2 - dy1 * dx2, dx1 * dx2 + dy1 * dy2) * 180.0 / CV_PI;
+}
+
+/*
+    check if the found polygon has the sudoku shape
+*/
+bool isValidRect(std::vector<cv::Point>& contour) {
+    std::vector<cv::Point> approxShape;
+
+    cv::approxPolyDP(contour, approxShape, cv::arcLength(contour, true) * 0.02, true);
+
+    if (approxShape.size() != 4)
+        return false;
+
+    double sides[4]{};
+
+    // are all angles ~90 deg?
+    for (int i = 0; i < 4; ++i) {
+        double angle = std::abs(getAngle(approxShape[i], approxShape[(i + 1) % 4], approxShape[(i + 2) % 4]));
+
+        if (angle < 80 || angle > 100)
+            return false;
+
+        sides[i] = cv::norm(approxShape[i] - approxShape[(i + 1) % 4]);
+    }
+
+    // are all of the sides have similar lengths? check the ratio!
+    return *std::max_element(sides, sides + 4) / *std::min_element(sides, sides + 4) <= 1.2;
+}
+
+/*
     find the largest contour (might be the sudoku itself)
     todo: check if the contour meets the criteria: rectangle, almost the same dims 
 */
@@ -26,9 +67,9 @@ std::vector<cv::Point> findSudokuGrid(cv::Mat& mod) {
     double maxArea = 0;
     std::vector<cv::Point> maxContour;
 
-    for (const auto& contour : contours) {
+    for ( auto& contour : contours ) {
         double area = cv::contourArea(contour);
-        if (area > maxArea) {
+        if (isValidRect(contour) && area > maxArea) {
             maxArea = area;
             maxContour = contour;
         }
@@ -86,7 +127,6 @@ cv::Mat transformPerspective(cv::Mat& org, std::vector<cv::Point>& srcCorners) {
     return res;
 }
 
-
 /*
     split the given image into m columns x n rows image matrix
 */
@@ -100,7 +140,7 @@ std::vector<cv::Mat> split(cv::Mat& org, int m, int n) {
         for (int j = 0; j < m; ++j) {
             int x = width * j;
             int y = height * i;
-            res.push_back(org(cv::Rect(x + 5 , y + 5, width - 5, height - 5)));
+            res.push_back(org(cv::Rect(x, y, width, height)));
         }
     }
 
@@ -128,46 +168,53 @@ void start(tesseract::TessBaseAPI& tess, cv::Mat& frame, cv::Mat& modifiedFrame)
         int cellWidth = transformedGrid.cols / 9;
         int cellHeight = transformedGrid.rows / 9;
 
-        for (int i = 0; i < sudokuNumbers.size(); ++i) {
-            cv::Mat& num = sudokuNumbers[i];
+        if (cellWidth > 0 && cellHeight > 0) {
 
-            cv::cvtColor(num, num, cv::COLOR_BGR2GRAY);
-            cv::GaussianBlur(num, num, cv::Size(11, 11), 0);
-            cv::adaptiveThreshold(num, num, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, 11, 2);
+            for (int i = 0; i < sudokuNumbers.size(); ++i) {
+                cv::Mat& num = sudokuNumbers[i];
 
-            tess.SetImage((uchar*)num.data, num.size().width, num.size().height, 1, num.step1());
-            tess.Recognize(0);
+                cv::cvtColor(num, num, cv::COLOR_BGR2GRAY);
+                cv::GaussianBlur(num, num, cv::Size(3, 3), 0);
+                cv::adaptiveThreshold(num, num, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, 3, 2);
 
-            if (19 <= i && i <= 28)
-                cv::imshow("cell " + std::to_string(i), num);
+                tess.SetImage((uchar*)num.data, num.size().width, num.size().height, 1, num.step1());
+                tess.Recognize(0);
 
-            const char* word = tess.GetUTF8Text();
-            float conf = tess.MeanTextConf();
-            int x = (i % 9) * cellWidth;
-            int y = (i / 9) * cellHeight;
+                //if (19 <= i && i <= 28)
+                //    cv::imshow("cell " + std::to_string(i), num);
 
-            if ( word && conf >= 80 ) {
-                cv::putText(transformedGridCopy, word, cv::Point(x + cellWidth / 4, y + 3 * cellHeight / 4),
-                    cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                const char* word = tess.GetUTF8Text();
+                float conf = tess.MeanTextConf();
+
+                int x = (i % 9) * cellWidth;
+                int y = (i / 9) * cellHeight;
+
+                if (word && conf >= 80) {
+                    cv::putText(transformedGridCopy, word, cv::Point(x + cellWidth / 4, y + 3 * cellHeight / 4),
+                        cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+                }
+
+                delete[] word;
             }
 
-            delete[] word;
+
+            cv::imshow("transformed", transformedGridCopy);
+
+            for (auto& corner : srcCorners) {
+                cv::circle(frame, corner, 5, cv::Scalar(0, 0, 255), cv::FILLED);
+            }
+
+            cv::rectangle(frame, cv::boundingRect(srcCorners), cv::Scalar(0, 255, 0), 2);
+
         }
-
-        cv::imshow("transformed", transformedGridCopy);
-
-        for (auto& corner : srcCorners) {
-            cv::circle(frame, corner, 5, cv::Scalar(0, 0, 255), cv::FILLED);
-        }
-
-        cv::rectangle(frame, cv::boundingRect(srcCorners), cv::Scalar(0, 255, 0), 2);
     }
 
     cv::imshow("original", frame);
     cv::imshow("mapped", modifiedFrame);
 }
 
-int main() {
+int main( int argc, char** argv ) {
+
     cv::VideoCapture camera(0);
 
     if (!camera.isOpened()) {
