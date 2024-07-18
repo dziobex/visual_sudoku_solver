@@ -10,7 +10,7 @@ void applyThreshold(cv::Mat& org, cv::Mat& mod) {
     cv::cvtColor(org, mod, cv::COLOR_BGR2GRAY);
     cv::GaussianBlur(mod, mod, cv::Size(11, 11), 0);
     cv::adaptiveThreshold(mod, mod, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, 11, 2);
-    
+
     // thicc digits!
     cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
     cv::dilate(mod, mod, kernel);
@@ -57,8 +57,7 @@ bool isValidRect(std::vector<cv::Point>& contour) {
 }
 
 /*
-    find the largest contour (might be the sudoku itself)
-    todo: check if the contour meets the criteria: rectangle, almost the same dims 
+    find the largest contour (might be the sudoku itself!)
 */
 std::vector<cv::Point> findSudokuGrid(cv::Mat& mod) {
     std::vector<std::vector<cv::Point>> contours;
@@ -79,7 +78,7 @@ std::vector<cv::Point> findSudokuGrid(cv::Mat& mod) {
 }
 
 /*
-    get edges of the sudoku
+    get the sudoku's edges
 */
 std::vector<cv::Point> getSudokuCorners( std::vector<cv::Point>& grid ) {
     cv::Point topLeft, topRight, bottomLeft, bottomRight;
@@ -147,12 +146,58 @@ std::vector<cv::Mat> split(cv::Mat& org, int m, int n) {
     return res;
 }
 
+bool transformNumber(cv::Mat& num) {
+    cv::cvtColor(num, num, cv::COLOR_BGR2GRAY);
+    cv::GaussianBlur(num, num, cv::Size(3, 3), 0);
+    cv::adaptiveThreshold(num, num, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, 11, 2);
+
+    int margin = 5;
+    cv::Rect centralRegion(margin, margin, num.cols - 2 * margin, num.rows - 2 * margin);
+    cv::Mat centralNum = num(centralRegion);
+
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(centralNum, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+    double maxArea = 0;
+    std::vector<cv::Point> maxContour;
+
+    for (auto& contour : contours) {
+        double area = cv::contourArea(contour);
+        if (area > maxArea) {
+            maxArea = area;
+            maxContour = contour;
+        }
+    }
+
+    if (!maxContour.empty()) {
+        cv::Rect newContour = cv::boundingRect(maxContour);
+        newContour.x += margin;
+        newContour.y += margin;
+
+        num = num(newContour);
+
+        int targetSize = 40;
+        if ( num.cols < targetSize || num.rows < targetSize ) {
+            float scale = std::max(float(targetSize) / num.cols, float(targetSize) / num.rows);
+            cv::resize(num, num, cv::Size(), scale, scale, cv::INTER_LINEAR);
+        }
+
+        cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
+        cv::dilate(num, num, kernel);
+
+        return true;
+    }
+
+    return false;
+}
+
+
 void start(tesseract::TessBaseAPI& tess, cv::Mat& frame, cv::Mat& modifiedFrame) {
     applyThreshold(frame, modifiedFrame);
 
     std::vector<cv::Point> sudokuGrid = findSudokuGrid(modifiedFrame);
 
-    if ( sudokuGrid.empty() )
+    if (sudokuGrid.empty())
         return;
 
     std::vector<cv::Point> srcCorners = getSudokuCorners(sudokuGrid);
@@ -164,24 +209,21 @@ void start(tesseract::TessBaseAPI& tess, cv::Mat& frame, cv::Mat& modifiedFrame)
         std::vector<cv::Mat> sudokuNumbers = split(transformedGrid, 9, 9);
 
         // go through the sudokuNumbers and mark recognized numbers
-
         int cellWidth = transformedGrid.cols / 9;
         int cellHeight = transformedGrid.rows / 9;
 
         if (cellWidth > 0 && cellHeight > 0) {
-
             for (int i = 0; i < sudokuNumbers.size(); ++i) {
                 cv::Mat& num = sudokuNumbers[i];
 
-                cv::cvtColor(num, num, cv::COLOR_BGR2GRAY);
-                cv::GaussianBlur(num, num, cv::Size(3, 3), 0);
-                cv::adaptiveThreshold(num, num, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY_INV, 3, 2);
+                if (!transformNumber(num))
+                    continue;
 
-                tess.SetImage((uchar*)num.data, num.size().width, num.size().height, 1, num.step1());
+                tess.SetImage((uchar*)num.data, num.size().width, num.size().height, num.channels(), num.step1());
                 tess.Recognize(0);
 
-                //if (19 <= i && i <= 28)
-                //    cv::imshow("cell " + std::to_string(i), num);
+                if (0 <= i && i <= 20)
+                   cv::imshow("cell " + std::to_string(i), num);
 
                 const char* word = tess.GetUTF8Text();
                 float conf = tess.MeanTextConf();
@@ -189,14 +231,13 @@ void start(tesseract::TessBaseAPI& tess, cv::Mat& frame, cv::Mat& modifiedFrame)
                 int x = (i % 9) * cellWidth;
                 int y = (i / 9) * cellHeight;
 
-                if (word && conf >= 80) {
+                if (word && conf >= 60) {
                     cv::putText(transformedGridCopy, word, cv::Point(x + cellWidth / 4, y + 3 * cellHeight / 4),
                         cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
                 }
 
                 delete[] word;
             }
-
 
             cv::imshow("transformed", transformedGridCopy);
 
@@ -205,7 +246,6 @@ void start(tesseract::TessBaseAPI& tess, cv::Mat& frame, cv::Mat& modifiedFrame)
             }
 
             cv::rectangle(frame, cv::boundingRect(srcCorners), cv::Scalar(0, 255, 0), 2);
-
         }
     }
 
@@ -213,8 +253,7 @@ void start(tesseract::TessBaseAPI& tess, cv::Mat& frame, cv::Mat& modifiedFrame)
     cv::imshow("mapped", modifiedFrame);
 }
 
-int main( int argc, char** argv ) {
-
+int activeCamera(tesseract::TessBaseAPI& tess) {
     cv::VideoCapture camera(0);
 
     if (!camera.isOpened()) {
@@ -223,10 +262,6 @@ int main( int argc, char** argv ) {
     }
 
     std::cout << "Click 'ESC' to stop the program!\n";
-
-    tesseract::TessBaseAPI tess;
-    tess.Init(NULL, "eng", tesseract::OEM_DEFAULT);
-    tess.SetVariable("tessedit_char_whitelist", "0123456789");
 
     cv::Mat frame, modifiedFrame;
 
@@ -245,4 +280,33 @@ int main( int argc, char** argv ) {
     }
 
     return 0;
+}
+
+int passiveImage(tesseract::TessBaseAPI& tess, std::string path) {
+    cv::Mat img = cv::imread(path, cv::IMREAD_COLOR);
+    cv::Mat modifiedImg;
+
+    if (img.empty())
+        return std::cerr << "Couldn't open the file!\n", -1;
+
+    start(tess, img, modifiedImg);
+
+    std::cout << "Click 'ESC' to stop the program!\n";
+
+    while (cv::waitKey(27) < 0) {}
+
+    return 0;
+}
+
+int main(int argc, char** argv) {
+    tesseract::TessBaseAPI tess;
+    tess.Init(NULL, "eng", tesseract::OEM_TESSERACT_ONLY);
+    tess.SetVariable("tessedit_char_whitelist", "123456789");
+    tess.SetPageSegMode(tesseract::PSM_SINGLE_CHAR);
+
+    if (argc == 1) {
+        return activeCamera(tess);
+    }
+
+    return passiveImage(tess, argv[1]);
 }
