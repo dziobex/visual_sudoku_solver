@@ -1,5 +1,5 @@
-﻿  main.cpp
-C:\Users\jedno\Desktop\projects\visual_sudoku_solver\main.cpp(114,54): warning C4244: 'argument': conversion from '_Tp' to '_Tp', possible loss of data
+﻿  capture.hpp
+C:\Users\jedno\Desktop\projects\visual_sudoku_solver\process.hpp(113,53): warning C4244: 'argument': conversion from '_Tp' to '_Tp', possible loss of data
           with
           [
               _Tp=int
@@ -8,7 +8,7 @@ C:\Users\jedno\Desktop\projects\visual_sudoku_solver\main.cpp(114,54): warning C
           [
               _Tp=float
           ]
-C:\Users\jedno\Desktop\projects\visual_sudoku_solver\main.cpp(114,46): warning C4244: 'argument': conversion from '_Tp' to '_Tp', possible loss of data
+C:\Users\jedno\Desktop\projects\visual_sudoku_solver\process.hpp(113,45): warning C4244: 'argument': conversion from '_Tp' to '_Tp', possible loss of data
           with
           [
               _Tp=int
@@ -17,35 +17,45 @@ C:\Users\jedno\Desktop\projects\visual_sudoku_solver\main.cpp(114,46): warning C
           [
               _Tp=float
           ]
-C:\Users\jedno\Desktop\projects\visual_sudoku_solver\main.cpp(116,16): warning C4244: 'initializing': conversion from 'const _Ty' to 'float', possible loss of data
+C:\Users\jedno\Desktop\projects\visual_sudoku_solver\process.hpp(115,16): warning C4244: 'initializing': conversion from 'const _Ty' to 'float', possible loss of data
           with
           [
               _Ty=double
           ]
-C:\Users\jedno\Desktop\projects\visual_sudoku_solver\main.cpp(130,67): warning C4244: 'argument': conversion from 'float' to '_Tp', possible loss of data
+C:\Users\jedno\Desktop\projects\visual_sudoku_solver\process.hpp(128,67): warning C4244: 'argument': conversion from 'float' to '_Tp', possible loss of data
           with
           [
               _Tp=int
           ]
-C:\Users\jedno\Desktop\projects\visual_sudoku_solver\main.cpp(130,61): warning C4244: 'argument': conversion from 'float' to '_Tp', possible loss of data
+C:\Users\jedno\Desktop\projects\visual_sudoku_solver\process.hpp(128,61): warning C4244: 'argument': conversion from 'float' to '_Tp', possible loss of data
           with
           [
               _Tp=int
           ]
-C:\Users\jedno\Desktop\projects\visual_sudoku_solver\main.cpp(200,82): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
+C:\Users\jedno\Desktop\projects\visual_sudoku_solver\recognize.hpp(65,82): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
           with
           [
               _Tp=int
           ]
-C:\Users\jedno\Desktop\projects\visual_sudoku_solver\main.cpp(200,77): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
+C:\Users\jedno\Desktop\projects\visual_sudoku_solver\recognize.hpp(65,77): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
           with
           [
               _Tp=int
           ]
-C:\Users\jedno\Desktop\projects\visual_sudoku_solver\main.cpp(243,113): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jedno\Desktop\projects\visual_sudoku_solver\main.cpp(250,28): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\jedno\Desktop\projects\visual_sudoku_solver\start.hpp(42,113): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jedno\Desktop\projects\visual_sudoku_solver\start.hpp(46,28): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+C:\Users\jedno\Desktop\projects\visual_sudoku_solver\start.hpp(120,67): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=int
+          ]
+C:\Users\jedno\Desktop\projects\visual_sudoku_solver\start.hpp(120,42): warning C4244: 'argument': conversion from 'double' to '_Tp', possible loss of data
+          with
+          [
+              _Tp=int
+          ]
   Generating code
-  4 of 651 functions ( 0.6%) were compiled, the rest were copied from previous compilation.
+  0 of 667 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
     0 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
