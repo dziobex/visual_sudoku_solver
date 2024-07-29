@@ -146,15 +146,19 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="capture.hpp" />
+    <ClCompile Include="capture.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="process.hpp" />
-    <ClInclude Include="recognize.hpp" />
-    <ClInclude Include="settings.h" />
-    <ClInclude Include="solve.hpp" />
-    <ClInclude Include="start.hpp" />
+    <ClInclude Include="capture.h" />
+    <ClInclude Include="process.h" />
+    <ClInclude Include="process.cpp" />
+    <ClInclude Include="recognize.cpp" />
+    <ClInclude Include="recognize.h" />
+    <ClInclude Include="solve.cpp" />
+    <ClInclude Include="solve.h" />
+    <ClInclude Include="start.h" />
+    <ClInclude Include="start.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

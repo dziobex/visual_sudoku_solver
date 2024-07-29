@@ -1,4 +1,4 @@
-﻿#include "capture.hpp"
+﻿#include "capture.h"
 
 int main(int argc, char** argv) {
 

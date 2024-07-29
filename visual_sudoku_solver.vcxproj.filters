@@ -18,24 +18,36 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="capture.hpp">
+    <ClCompile Include="capture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="solve.hpp">
+    <ClInclude Include="solve.cpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="settings.h">
+    <ClInclude Include="process.cpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="process.hpp">
+    <ClInclude Include="recognize.cpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="recognize.hpp">
+    <ClInclude Include="start.cpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="start.hpp">
+    <ClInclude Include="capture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="process.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="start.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solve.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="recognize.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
